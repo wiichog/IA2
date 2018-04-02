@@ -1,50 +1,72 @@
 import random
+from functools import reduce
+from collections import Counter
 
 class utils:
-    spam = {}
-    ham = {}
-    spamWords = []
-    hamWords = []
-    training = []
-    crossValidation = []
-    test = []
 
     def __init__(self):
-        pass
+        self.spam = {}
+        self.ham = {}
+        self.spamWords = []
+        self.hamWords = []
+        self.training = []
+        self.crossValidation = []
+        self.test = []
+        self.k = 1
 
-    def analizer(self,lines):
+    def analizer(self,lines,g,f,word):
         for line in lines:
-            cleanLine = ''.join([c.lower() for c in line.split("\t")[1] if(ord(c.lower())>=97 and ord(c.lower())<=122 or ord(c.lower())==32)])
-            if(line.split("\t")[0].lower()=="ham"):
-                self.addDictionary(self.ham,cleanLine.split(" "))
-                self.hamWords.append(cleanLine)
+            cleanLine = line.split("\t")[0].lower() + '\t' + ''.join([c.lower() for c in line.split("\t")[1] if(ord(c.lower())>=97 and ord(c.lower())<=122 or ord(c.lower())==32)])
+            if(line.split("\t")[0].lower()==word):
+                g(cleanLine)
             else:
-                self.addDictionary(self.spam,cleanLine.split(" "))
-                self.spamWords.append(cleanLine)
+                f(cleanLine)
 
     def addDictionary(self,dictionary,words):
+        words = words.split("\t")[1].split(" ")
         for word in words:
             if((word.lower() not in dictionary) and len(word)>1):
-                dictionary[word.lower()] = 0
+                dictionary[word.lower()] = 1
             elif((word.lower() in dictionary) and len(word)>1):
                 dictionary[word.lower()] += 1
 
     def partitions(self):
         random.shuffle(self.spamWords)
         random.shuffle(self.hamWords)
-        print("spamWords len "+str(len(self.spamWords)))
-        print("hamWords len "+str(len(self.hamWords)))
-        print("Suma "+str(len(self.spamWords)+len(self.hamWords)))
-        self.training.extend(self.spamWords[:int(len(self.spamWords)*0.8)])
-        self.training.extend(self.hamWords[:int(len(self.hamWords)*0.8)])
+        self.training.extend(self.spamWords)
+        self.training.extend(self.hamWords)
+        #self.training.extend(self.spamWords[:int(len(self.spamWords)*0.8)])
+        #self.training.extend(self.hamWords[:int(len(self.hamWords)*0.8)])
         self.crossValidation.extend(self.spamWords[int(len(self.spamWords)*0.8):int(len(self.spamWords)*0.9)])
         self.crossValidation.extend(self.hamWords[int(len(self.hamWords)*0.8):int(len(self.hamWords)*0.9)])
+        print(self.crossValidation)
         self.test.extend(self.spamWords[int(len(self.spamWords)*0.9):])
         self.test.extend(self.hamWords[int(len(self.hamWords)*0.9):])
-        print("training len "+str(len(self.training)))
-        print("crossValidation len "+str(len(self.crossValidation)))
-        print("test len "+str(len(self.test)))
-        print("suma total "+str(len(self.training)+len(self.crossValidation)+len(self.test)))
+        
+
+    def getPSpamGivenSentence(self,sentence):
+        ulist = []
+        [ulist.append(x) for x in sentence if x not in ulist]
+        print([self.getPOfWordGivenSpam(word,self.spam)**sentence.count(word) for word in ulist])
+        print([self.getPOfWordGivenSpam(word,self.ham)**sentence.count(word) for word in ulist])
+        a = (reduce((lambda x, y: x * y), [self.getPOfWordGivenSpam(word.lower(),self.spam)**sentence.count(word) for word in ulist]) * self.getPOfDict("spam"))
+        b = (reduce((lambda x, y: x * y), [self.getPOfWordGivenSpam(word.lower(),self.ham)**sentence.count(word) for word in ulist]) * self.getPOfDict("ham"))
+        return a/float(a+b)
+        
+    def getPOfWordGivenSpam(self,word,dict):
+        print(self.spam)
+        print(self.ham)
+        a = set(self.spam.keys()).symmetric_difference(self.ham.keys())
+        print(a)
+        try:
+            return (dict.get(str(word))+self.k)/float(sum(dict.values())+self.k*(a))
+        except:
+            return (0+self.k)/float(sum(dict.values())+self.k*(a))
+
+
+    def getPOfDict(self,dict):
+        return (sum([1 for message in self.training if(message.split("\t")[0]==dict)]) + self.k)/float(len(self.training)+self.k*(2))
+        
         
         
         
