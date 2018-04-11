@@ -1,6 +1,7 @@
 from utils import *
 import pickle
 import numpy as np
+from tkinter.filedialog import askopenfilename
 
 operations = utils()
 operations.spam = pickle.load( open( "spam.p", "rb" ) )
@@ -15,13 +16,12 @@ for line in crossValidation:
     sides = line.split("\t")
     if(sides[0]=="spam"):
         crossValidationSpamCounter +=1
-print("crossValidationSpam " + str(crossValidationSpamCounter))
 testSpamCounter = 0
 for line in test:
     sides = line.split("\t")
     if(sides[0]=="spam"):
         testSpamCounter +=1
-print("testSpam " + str(testSpamCounter))
+
 #DISCOMMENT THIS IF YOU WANT TO RECREATE THE K FOR CROSSVALIDATION
 #for i in np.arange(0.01, 2.0, 0.01):
 #    operations.k = i
@@ -36,6 +36,7 @@ print("testSpam " + str(testSpamCounter))
 #        testForK.append(i)
 #operations.saveDicts(testForK,"bestK")
 testForK = pickle.load( open( "bestK.p", "rb" ) )
+
 #DISCOMMENT THIS IF YOU WANT TO RECREATE THE K FOR TEST
 #finals = []
 #for k in testForK:
@@ -51,10 +52,12 @@ testForK = pickle.load( open( "bestK.p", "rb" ) )
 #operations.saveDicts(finals,"finalK")
 
 finals = pickle.load( open( "finalK.p", "rb" ) )
-#XXXMobileMovieClub: To use your credit, click the WAP link in the next txt message or click here>> http://wap. xxxmobilemovieclub.com?n=QJKGIGHJJGCBL
-sentence = input("Ingrese una oracion para analizar ")
-operations.k = random.choice(finals)
-print(operations.k)
-print(operations.getPSpamGivenSentence(sentence.split(" "))*100)
-
-
+print("ingrese salir pata terminar programa")
+sentence=""
+while(sentence!="salir"):
+    sentence = input("Ingrese una oracion para analizar ")
+    operations.k = random.choice(finals)
+    if((operations.getPSpamGivenSentence(sentence.split(" "))*100)>90):
+        print("Spam")
+    else:
+        print("Ham")
